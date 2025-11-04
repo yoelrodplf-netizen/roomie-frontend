@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// Usa la URL de tu backend en Render
+// ✅ Usa la URL de tu backend en Render
 const API_BASE_URL = 'https://roomie-backend-zixc.onrender.com';
 
 export default function App() {
@@ -293,4 +293,127 @@ export default function App() {
             <input type="range" min="0" max="100" value={formData.nivel_ruido_nivel} onChange={e => setFormData({...formData, nivel_ruido_nivel: Number(e.target.value)})} style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: '#e5e7eb', borderRadius: '4px', outline: 'none' }} />
           </div>
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Consumo de alcohol <span style={{ color: '#7c3aed' }}>{formData.consumo_alcohol_nivel}/100</span></label>
+            <input type="range" min="0" max="100" value={formData.consumo_alcohol_nivel} onChange={e => setFormData({...formData, consumo_alcohol_nivel: Number(e.target.value)})} style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: '#e5e7eb', borderRadius: '4px', outline: 'none' }} />
+          </div>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Frecuencia de invitados <span style={{ color: '#7c3aed' }}>{formData.frecuencia_invitados_nivel}/100</span></label>
+            <input type="range" min="0" max="100" value={formData.frecuencia_invitados_nivel} onChange={e => setFormData({...formData, frecuencia_invitados_nivel: Number(e.target.value)})} style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: '#e5e7eb', borderRadius: '4px', outline: 'none' }} />
+          </div>
+          <select value={formData.horario_vida} onChange={e => setFormData({...formData, horario_vida: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', marginBottom: '1rem' }}>
+            <option value="">Horario de vida</option>
+            <option value="Mañanero">Mañanero</option>
+            <option value="Nocturno">Nocturno</option>
+            <option value="Flexible">Flexible</option>
+          </select>
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+            <input type="checkbox" checked={formData.es_fumador} onChange={e => setFormData({...formData, es_fumador: e.target.checked})} /> Soy fumador
+          </label>
+          <input placeholder="Mascotas" value={formData.mascotas} onChange={e => setFormData({...formData, mascotas: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', marginBottom: '1.5rem' }} />
+
+          <button onClick={handleSaveProfile} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', fontWeight: '600', marginTop: '1rem' }}>Guardar cambios</button>
+        </div>
+      </div>
+    );
+  }
+
+  // =============== LOGIN Y REGISTRO ===============
+  return (
+    <div style={{ fontFamily: 'system-ui', backgroundColor: '#f9fafb', minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', boxSizing: 'border-box', overflow: 'hidden' }}>
+      <div style={{ maxWidth: '400px', width: '100%', padding: '2rem', backgroundColor: 'white', borderRadius: '1rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ width: '60px', height: '60px', backgroundColor: '#7c3aed', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}><span style={{ fontSize: '2rem' }}>🏠</span></div>
+          <h2 style={{ color: '#1f2937', fontSize: '1.8rem' }}>Roomie Finder</h2>
+          <p style={{ color: '#6b7280' }}>Encuentra tu roomie ideal</p>
+        </div>
+
+        {currentView === 'login' && (
+          <>
+            <input type="email" placeholder="Correo electrónico" value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
+            <input type="password" placeholder="Contraseña" value={password} onChange={e => setPassword(e.target.value)} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
+            <button onClick={handleLogin} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', marginTop: '1rem', fontWeight: '600' }}>Iniciar Sesión</button>
+            <p style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+              ¿No tienes cuenta?{' '}
+              <button onClick={() => { setEmail(''); setPassword(''); setCurrentView('signup'); }} style={{ color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Regístrate aquí</button>
+            </p>
+          </>
+        )}
+
+        {currentView === 'signup' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <button onClick={() => { setStep(1); setCurrentView('login'); }} style={{ color: '#6b7280', background: 'none', border: 'none' }}>← Volver</button>
+              <span>Paso {step} de 5</span>
+            </div>
+
+            {step === 1 && (
+              <>
+                <h2 style={{ textAlign: 'center', color: '#1f2937', marginBottom: '1.5rem' }}>Crea tu cuenta</h2>
+                <input placeholder="Nombre completo" value={formData.nombre_perfil} onChange={e => setFormData({ ...formData, nombre_perfil: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
+                <input type="email" placeholder="Correo electrónico" value={formData.correo_electronico} onChange={e => setFormData({ ...formData, correo_electronico: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
+                <input type="password" placeholder="Contraseña (mín. 6 caracteres)" value={formData.contrasena} onChange={e => setFormData({ ...formData, contrasena: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
+                <input type="number" placeholder="Edad" value={formData.edad} onChange={e => setFormData({ ...formData, edad: e.target.value })} min="18" max="99" style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
+                <select value={formData.genero} onChange={e => setFormData({ ...formData, genero: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }}>
+                  <option value="">Género</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                  <option value="No binario">No binario</option>
+                  <option value="Prefiero no decirlo">Prefiero no decirlo</option>
+                </select>
+                <input placeholder="Profesión (opcional)" value={formData.profesion} onChange={e => setFormData({ ...formData, profesion: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <h2 style={{ textAlign: 'center', color: '#1f2937', marginBottom: '1.5rem' }}>Estilo de vida</h2>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Nivel de limpieza <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>{formData.habito_limpieza_nivel}/100</span></label>
+                  <input type="range" min="0" max="100" value={formData.habito_limpieza_nivel} onChange={e => setFormData({ ...formData, habito_limpieza_nivel: Number(e.target.value) })} style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: '#e5e7eb', borderRadius: '4px', outline: 'none' }} />
+                </div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Tolerancia al ruido <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>{formData.nivel_ruido_nivel}/100</span></label>
+                  <input type="range" min="0" max="100" value={formData.nivel_ruido_nivel} onChange={e => setFormData({ ...formData, nivel_ruido_nivel: Number(e.target.value) })} style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: '#e5e7eb', borderRadius: '4px', outline: 'none' }} />
+                </div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Consumo de alcohol <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>{formData.consumo_alcohol_nivel}/100</span></label>
+                  <input type="range" min="0" max="100" value={formData.consumo_alcohol_nivel} onChange={e => setFormData({ ...formData, consumo_alcohol_nivel: Number(e.target.value) })} style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: '#e5e7eb', borderRadius: '4px', outline: 'none' }} />
+                </div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Frecuencia de invitados <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>{formData.frecuencia_invitados_nivel}/100</span></label>
+                  <input type="range" min="0" max="100" value={formData.frecuencia_invitados_nivel} onChange={e => setFormData({ ...formData, frecuencia_invitados_nivel: Number(e.target.value) })} style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: '#e5e7eb', borderRadius: '4px', outline: 'none' }} />
+                </div>
+                <select value={formData.horario_vida} onChange={e => setFormData({ ...formData, horario_vida: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }}>
+                  <option value="">Horario de vida</option>
+                  <option value="Mañanero">Mañanero</option>
+                  <option value="Nocturno">Nocturno</option>
+                  <option value="Flexible">Flexible</option>
+                </select>
+                <label style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
+                  <input type="checkbox" checked={formData.es_fumador} onChange={e => setFormData({ ...formData, es_fumador: e.target.checked })} /> Soy fumador
+                </label>
+                <input placeholder="Mascotas (ej: perro pequeño)" value={formData.mascotas} onChange={e => setFormData({ ...formData, mascotas: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', marginTop: '1rem', boxSizing: 'border-box' }} />
+              </>
+            )}
+
+            {step >= 3 && (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <h2>✅ Pasos 3-5 simplificados para prueba</h2>
+                <p>En una versión completa, aquí irían necesidades, intereses y biografía.</p>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+              {step > 1 && <button onClick={handleBack} style={{ padding: '0.75rem 1.5rem', border: '1px solid #d1d5db', borderRadius: '9999px', background: 'white', cursor: 'pointer', fontWeight: '600' }}>Atrás</button>}
+              {step < 2 ? (
+                <button onClick={handleNext} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', marginLeft: 'auto', cursor: 'pointer', fontWeight: '600' }}>Siguiente</button>
+              ) : (
+                <button onClick={handleRegister} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', marginLeft: 'auto', cursor: 'pointer', fontWeight: '600' }}>Finalizar Registro</button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
