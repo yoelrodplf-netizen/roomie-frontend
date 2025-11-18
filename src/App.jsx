@@ -1,10 +1,10 @@
+// src/App.jsx
 import React, { useState, useEffect } from 'react';
 
-// ✅ Usa la URL de tu backend en Render
 const API_BASE_URL = 'https://roomie-backend-zixc.onrender.com';
 
 export default function App() {
-  // ✅ Estados principales — ¡todos declarados!
+  // Estados principales
   const [currentView, setCurrentView] = useState('login');
   const [user, setUser] = useState({ id: null, nombre: '' });
   const [token, setToken] = useState(localStorage.getItem('roomie_token'));
@@ -12,11 +12,15 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  // Estados para login
+  // Login
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Estados para registro y edición
+  // Foto de perfil
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+
+  // Formulario
   const [formData, setFormData] = useState({
     correo_electronico: '',
     contrasena: '',
@@ -45,12 +49,21 @@ export default function App() {
     habilidades_intereses: [],
     descripcion_roomie_ideal: '',
     expectativas_hogar: '',
-    descripcion_personal: ''
+    descripcion_personal: '',
+    foto_perfil: null
   });
 
   const [step, setStep] = useState(1);
 
-  // Efecto para cargar perfiles o mi perfil
+  // Limpiar foto al cambiar de vista
+  useEffect(() => {
+    if (currentView !== 'signup' && currentView !== 'my-profile') {
+      setProfilePhoto(null);
+      setPhotoPreview(null);
+    }
+  }, [currentView]);
+
+  // Cargar perfiles o mi perfil
   useEffect(() => {
     if (token && currentView === 'matching') {
       fetchProfiles();
@@ -60,7 +73,18 @@ export default function App() {
     }
   }, [token, currentView]);
 
-  // Funciones de API
+  // Manejar selección de foto
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setProfilePhoto(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    } else if (file) {
+      alert('Por favor, selecciona una imagen válida (JPEG, PNG, etc.)');
+    }
+  };
+
+  // API: Cargar perfiles
   const fetchProfiles = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/profile/feed`, {
@@ -70,14 +94,13 @@ export default function App() {
       if (res.ok) {
         setProfiles(data);
         setCurrentIndex(0);
-      } else {
-        console.error('Error en respuesta:', data);
       }
     } catch (err) {
       console.error('Error al cargar perfiles:', err);
     }
   };
 
+  // API: Cargar mi perfil
   const loadMyProfile = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/profile/me`, {
@@ -86,43 +109,17 @@ export default function App() {
       const data = await res.json();
       if (res.ok) {
         setFormData({
-          correo_electronico: data.correo_electronico || '',
-          contrasena: '',
-          nombre_perfil: data.nombre_perfil || '',
-          edad: data.edad || '',
-          genero: data.genero || '',
-          profesion: data.profesion || '',
-          habito_limpieza_nivel: data.habito_limpieza_nivel || 50,
-          nivel_ruido_nivel: data.nivel_ruido_nivel || 50,
-          consumo_alcohol_nivel: data.consumo_alcohol_nivel || 0,
-          frecuencia_invitados_nivel: data.frecuencia_invitados_nivel || 30,
-          horario_vida: data.horario_vida || '',
-          es_fumador: data.es_fumador || false,
-          mascotas: data.mascotas || '',
-          presupuesto_max_renta: data.presupuesto_max_renta || '',
-          fecha_mudanza_min: data.fecha_mudanza_min || '',
-          fecha_mudanza_max: data.fecha_mudanza_max || '',
-          ubicacion_preferida: data.ubicacion_preferida || '',
-          tipo_propiedad: data.tipo_propiedad || '',
-          es_amueblada: data.es_amueblada || false,
-          quiere_bano_propio: data.quiere_bano_propio || false,
-          servicios_incluidos: data.servicios_incluidos || [],
-          caracteristicas_adicionales: data.caracteristicas_adicionales || [],
-          hobbies: data.hobbies || [],
-          filosofia_vida: data.filosofia_vida || '',
-          habilidades_intereses: data.habilidades_intereses || [],
-          descripcion_roomie_ideal: data.descripcion_roomie_ideal || '',
-          expectativas_hogar: data.expectativas_hogar || '',
-          descripcion_personal: data.descripcion_personal || ''
+          ...data,
+          contrasena: '' // No mostrar contraseña
         });
-      } else {
-        console.error('Error al cargar mi perfil:', data);
+        setPhotoPreview(data.foto_perfil || null);
       }
     } catch (err) {
       console.error('Error al cargar mi perfil:', err);
     }
   };
 
+  // API: Login
   const handleLogin = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -144,12 +141,20 @@ export default function App() {
     }
   };
 
+  // API: Registro
   const handleRegister = async () => {
+    const formDataToSend = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== '' && value !== null && value !== undefined) {
+        formDataToSend.append(key, value);
+      }
+    });
+    if (profilePhoto) formDataToSend.append('foto_perfil', profilePhoto);
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: formDataToSend
       });
       const data = await res.json();
       if (res.ok) {
@@ -165,15 +170,21 @@ export default function App() {
     }
   };
 
+  // API: Guardar perfil
   const handleSaveProfile = async () => {
+    const formDataToSend = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== '' && value !== null && value !== undefined) {
+        formDataToSend.append(key, value);
+      }
+    });
+    if (profilePhoto) formDataToSend.append('foto_perfil', profilePhoto);
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/profile/me`, {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formDataToSend
       });
       if (res.ok) {
         alert('✅ Perfil actualizado');
@@ -187,6 +198,7 @@ export default function App() {
     }
   };
 
+  // Cerrar sesión
   const handleLogout = () => {
     localStorage.removeItem('roomie_token');
     setToken(null);
@@ -194,6 +206,7 @@ export default function App() {
     setCurrentView('login');
   };
 
+  // Swipe
   const handleSwipe = (direction) => {
     if (currentIndex < profiles.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -202,15 +215,14 @@ export default function App() {
     }
   };
 
-  const handleNext = () => setStep(prev => Math.min(prev + 1, 5));
+  // Navegación en pasos
+  const handleNext = () => setStep(prev => Math.min(prev + 1, 2));
   const handleBack = () => setStep(prev => Math.max(prev - 1, 1));
 
   // =============== VISTAS ===============
-  if (currentView === 'matching') {
-    if (!user || !user.id) {
-      return <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando...</div>;
-    }
 
+  // Matching View
+  if (currentView === 'matching') {
     const currentProfile = profiles[currentIndex];
     return (
       <div style={{ fontFamily: 'system-ui', backgroundColor: '#f9fafb', minHeight: '100vh', width: '100vw', overflowX: 'hidden' }}>
@@ -232,7 +244,19 @@ export default function App() {
         <div style={{ height: 'calc(100vh - 80px)', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '1.5rem' }}>
           {currentProfile ? (
             <div style={{ width: '100%', maxWidth: '400px', backgroundColor: 'white', borderRadius: '1.5rem', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}>
-              <div style={{ height: '250px', background: 'linear-gradient(135deg, #fbbf77 0%, #f89d63 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '5rem' }}>👤</div>
+              <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', overflow: 'hidden' }}>
+                {currentProfile.foto_perfil ? (
+                  <img
+                    src={currentProfile.foto_perfil}
+                    alt={currentProfile.nombre_perfil}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #fbbf77 0%, #f89d63 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '5rem' }}>
+                    👤
+                  </div>
+                )}
+              </div>
               <div style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <h2 style={{ margin: 0, fontSize: '1.6rem', color: '#1f2937' }}>{currentProfile.nombre_perfil}, {currentProfile.edad}</h2>
@@ -261,6 +285,7 @@ export default function App() {
     );
   }
 
+  // Mi Perfil
   if (currentView === 'my-profile') {
     return (
       <div style={{ fontFamily: 'system-ui', backgroundColor: '#f9fafb', minHeight: '100vh', width: '100vw', padding: '1rem', boxSizing: 'border-box' }}>
@@ -271,6 +296,51 @@ export default function App() {
         </header>
 
         <div style={{ width: '100%', maxWidth: '100%', margin: '1rem auto', backgroundColor: 'white', borderRadius: '1rem', padding: '1.5rem', boxSizing: 'border-box' }}>
+          <h3 style={{ color: '#1f2937', marginBottom: '1rem' }}>Foto de perfil</h3>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.5rem',
+                boxSizing: 'border-box'
+              }}
+            />
+            {photoPreview ? (
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <img
+                  src={photoPreview}
+                  alt="Vista previa"
+                  style={{
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid #7c3aed'
+                  }}
+                />
+              </div>
+            ) : formData.foto_perfil ? (
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <img
+                  src={formData.foto_perfil}
+                  alt="Foto actual"
+                  style={{
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid #10b981'
+                  }}
+                />
+              </div>
+            ) : null}
+          </div>
+
           <h3 style={{ color: '#1f2937', marginBottom: '1rem' }}>Datos básicos</h3>
           <input placeholder="Nombre completo" value={formData.nombre_perfil} onChange={e => setFormData({...formData, nombre_perfil: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
           <input placeholder="Edad" type="number" value={formData.edad} onChange={e => setFormData({...formData, edad: e.target.value})} min="18" max="99" style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
@@ -317,7 +387,7 @@ export default function App() {
     );
   }
 
-  // =============== LOGIN Y REGISTRO ===============
+  // Login y Registro
   return (
     <div style={{ fontFamily: 'system-ui', backgroundColor: '#f9fafb', minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', boxSizing: 'border-box', overflow: 'hidden' }}>
       <div style={{ maxWidth: '400px', width: '100%', padding: '2rem', backgroundColor: 'white', borderRadius: '1rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
@@ -343,12 +413,42 @@ export default function App() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
               <button onClick={() => { setStep(1); setCurrentView('login'); }} style={{ color: '#6b7280', background: 'none', border: 'none' }}>← Volver</button>
-              <span>Paso {step} de 5</span>
+              <span>Paso {step} de 2</span>
             </div>
 
             {step === 1 && (
               <>
                 <h2 style={{ textAlign: 'center', color: '#1f2937', marginBottom: '1.5rem' }}>Crea tu cuenta</h2>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Foto de perfil (opcional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  {photoPreview && (
+                    <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                      <img
+                        src={photoPreview}
+                        alt="Vista previa"
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid #7c3aed'
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
                 <input placeholder="Nombre completo" value={formData.nombre_perfil} onChange={e => setFormData({ ...formData, nombre_perfil: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
                 <input type="email" placeholder="Correo electrónico" value={formData.correo_electronico} onChange={e => setFormData({ ...formData, correo_electronico: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
                 <input type="password" placeholder="Contraseña (mín. 6 caracteres)" value={formData.contrasena} onChange={e => setFormData({ ...formData, contrasena: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
@@ -394,13 +494,6 @@ export default function App() {
                 </label>
                 <input placeholder="Mascotas (ej: perro pequeño)" value={formData.mascotas} onChange={e => setFormData({ ...formData, mascotas: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', marginTop: '1rem', boxSizing: 'border-box' }} />
               </>
-            )}
-
-            {step >= 3 && (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <h2>✅ Pasos 3-5 simplificados para prueba</h2>
-                <p>En una versión completa, aquí irían necesidades, intereses y biografía.</p>
-              </div>
             )}
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
