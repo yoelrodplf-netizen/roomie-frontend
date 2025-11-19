@@ -1,7 +1,13 @@
-// src/App.jsx
 import React, { useState, useEffect } from 'react';
+import LocationInput from './components/LocationInput';
+import { io } from 'socket.io-client';
 
 const API_BASE_URL = 'https://roomie-backend-zixc.onrender.com';
+const SOCKET_SERVER = 'https://roomie-backend-zixc.onrender.com';
+
+const socket = io(SOCKET_SERVER, {
+  autoConnect: false
+});
 
 export default function App() {
   // Estados principales
@@ -16,9 +22,15 @@ export default function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Foto de perfil
+  // Foto
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+
+  // Chat
+  const [messages, setMessages] = useState([]);
+  const [showChat, setShowChat] = useState(false);
+  const [currentChatWith, setCurrentChatWith] = useState(null);
+  const [newMessage, setNewMessage] = useState('');
 
   // Formulario
   const [formData, setFormData] = useState({
@@ -73,14 +85,39 @@ export default function App() {
     }
   }, [token, currentView]);
 
-  // Manejar selección de foto
+  // Conectar socket
+  useEffect(() => {
+    if (token && user?.id) {
+      socket.auth = { token };
+      socket.connect();
+      socket.emit('authenticate', token);
+
+      socket.on('receiveMessage', (data) => {
+        setMessages(prev => [...prev, data]);
+      });
+
+      socket.on('error', (error) => {
+        console.error('Socket error:', error);
+        alert('Error en el chat: ' + error);
+      });
+    } else {
+      socket.disconnect();
+    }
+
+    return () => {
+      socket.off('receiveMessage');
+      socket.off('error');
+    };
+  }, [token, user?.id]);
+
+  // Manejar foto
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('image/')) {
       setProfilePhoto(file);
       setPhotoPreview(URL.createObjectURL(file));
     } else if (file) {
-      alert('Por favor, selecciona una imagen válida (JPEG, PNG, etc.)');
+      alert('Por favor, selecciona una imagen válida');
     }
   };
 
@@ -108,10 +145,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        setFormData({
-          ...data,
-          contrasena: '' // No mostrar contraseña
-        });
+        setFormData({ ...data, contrasena: '' });
         setPhotoPreview(data.foto_perfil || null);
       }
     } catch (err) {
@@ -119,7 +153,7 @@ export default function App() {
     }
   };
 
-  // API: Login
+  // Login
   const handleLogin = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -137,11 +171,11 @@ export default function App() {
         alert('❌ ' + (data.error || 'Login fallido'));
       }
     } catch (err) {
-      alert('⚠️ Error de conexión con el servidor');
+      alert('⚠️ Error de conexión');
     }
   };
 
-  // API: Registro
+  // Registro
   const handleRegister = async () => {
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -166,11 +200,11 @@ export default function App() {
         alert('❌ ' + (data.error || 'Registro fallido'));
       }
     } catch (err) {
-      alert('⚠️ Error de conexión con el servidor');
+      alert('⚠️ Error de conexión');
     }
   };
 
-  // API: Guardar perfil
+  // Guardar perfil
   const handleSaveProfile = async () => {
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -191,10 +225,10 @@ export default function App() {
         setCurrentView('matching');
       } else {
         const data = await res.json();
-        alert('❌ Error al actualizar: ' + (data.error || 'Desconocido'));
+        alert('❌ Error: ' + (data.error || 'Desconocido'));
       }
     } catch (err) {
-      alert('⚠️ Error de conexión con el servidor');
+      alert('⚠️ Error de conexión');
     }
   };
 
@@ -206,8 +240,22 @@ export default function App() {
     setCurrentView('login');
   };
 
-  // Swipe
-  const handleSwipe = (direction) => {
+  // Swipe con like
+  const handleSwipe = async (direction) => {
+    const currentProfile = profiles[currentIndex];
+    if (!currentProfile) return;
+
+    if (direction === 'right') {
+      try {
+        await fetch(`${API_BASE_URL}/api/profile/like/${currentProfile._id}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error('Error al dar like:', err);
+      }
+    }
+
     if (currentIndex < profiles.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
@@ -215,13 +263,22 @@ export default function App() {
     }
   };
 
-  // Navegación en pasos
-  const handleNext = () => setStep(prev => Math.min(prev + 1, 2));
+  // Chat
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !currentChatWith) return;
+    socket.emit('sendMessage', {
+      receiverId: currentChatWith,
+      message: newMessage
+    });
+    setNewMessage('');
+  };
+
+  // Navegación
+  const handleNext = () => setStep(prev => Math.min(prev + 1, 3));
   const handleBack = () => setStep(prev => Math.max(prev - 1, 1));
 
   // =============== VISTAS ===============
 
-  // Matching View
   if (currentView === 'matching') {
     const currentProfile = profiles[currentIndex];
     return (
@@ -271,6 +328,32 @@ export default function App() {
               </div>
               <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'center', gap: '1.5rem', borderTop: '1px solid #eee' }}>
                 <button onClick={() => handleSwipe('left')} style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#ef4444', color: 'white', border: 'none', fontSize: '1.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                
+                {user?.id && currentProfile?.likes?.includes(user.id) && (
+                  <button 
+                    onClick={() => {
+                      setCurrentChatWith(currentProfile._id);
+                      setShowChat(true);
+                      setMessages([]);
+                    }}
+                    style={{ 
+                      width: '60px', 
+                      height: '60px', 
+                      borderRadius: '50%', 
+                      backgroundColor: '#3b82f6', 
+                      color: 'white', 
+                      border: 'none', 
+                      fontSize: '1.5rem', 
+                      cursor: 'pointer', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }}
+                  >
+                    💬
+                  </button>
+                )}
+                
                 <button onClick={() => handleSwipe('right')} style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#10b981', color: 'white', border: 'none', fontSize: '1.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>❤️</button>
               </div>
             </div>
@@ -281,11 +364,95 @@ export default function App() {
             </div>
           )}
         </div>
+
+        {/* Chat Modal */}
+        {showChat && (
+          <div style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            width: '350px',
+            height: '400px',
+            backgroundColor: 'white',
+            borderRadius: '1rem',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 10000
+          }}>
+            <div style={{
+              padding: '1rem',
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderRadius: '1rem 1rem 0 0'
+            }}>
+              <h3>Chat con {profiles.find(p => p._id === currentChatWith)?.nombre_perfil || 'Usuario'}</h3>
+              <button 
+                onClick={() => setShowChat(false)}
+                style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div style={{
+              flex: 1,
+              padding: '1rem',
+              overflowY: 'auto',
+              backgroundColor: '#f9fafb'
+            }}>
+              {messages.map((msg, i) => (
+                <div 
+                  key={i} 
+                  style={{
+                    backgroundColor: msg.senderId === user.id ? '#e0e7ff' : '#f3f4f6',
+                    padding: '0.5rem',
+                    borderRadius: '0.5rem',
+                    margin: '0.5rem 0',
+                    alignSelf: msg.senderId === user.id ? 'flex-end' : 'flex-start'
+                  }}
+                >
+                  {msg.message}
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+              <input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Escribe un mensaje..."
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '9999px'
+                }}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              />
+              <button 
+                onClick={handleSendMessage}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#7c3aed',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '9999px',
+                  fontWeight: '600'
+                }}
+              >
+                Enviar
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Mi Perfil
   if (currentView === 'my-profile') {
     return (
       <div style={{ fontFamily: 'system-ui', backgroundColor: '#f9fafb', minHeight: '100vh', width: '100vw', padding: '1rem', boxSizing: 'border-box' }}>
@@ -353,6 +520,12 @@ export default function App() {
           </select>
           <input placeholder="Profesión" value={formData.profesion} onChange={e => setFormData({...formData, profesion: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
 
+          <h3 style={{ color: '#1f2937', margin: '1.5rem 0 1rem' }}>Ubicación</h3>
+          <LocationInput
+            value={formData.ubicacion_preferida}
+            onChange={(newLocation) => setFormData({ ...formData, ubicacion_preferida: newLocation })}
+          />
+
           <h3 style={{ color: '#1f2937', margin: '1.5rem 0 1rem' }}>Estilo de vida</h3>
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Nivel de limpieza <span style={{ color: '#7c3aed' }}>{formData.habito_limpieza_nivel}/100</span></label>
@@ -413,7 +586,7 @@ export default function App() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
               <button onClick={() => { setStep(1); setCurrentView('login'); }} style={{ color: '#6b7280', background: 'none', border: 'none' }}>← Volver</button>
-              <span>Paso {step} de 2</span>
+              <span>Paso {step} de 3</span>
             </div>
 
             {step === 1 && (
@@ -466,6 +639,24 @@ export default function App() {
 
             {step === 2 && (
               <>
+                <h2 style={{ textAlign: 'center', color: '#1f2937', marginBottom: '1.5rem' }}>Ubicación y vivienda</h2>
+                <LocationInput
+                  value={formData.ubicacion_preferida}
+                  onChange={(newLocation) => setFormData({ ...formData, ubicacion_preferida: newLocation })}
+                />
+                <input placeholder="Presupuesto máx. renta" value={formData.presupuesto_max_renta} onChange={e => setFormData({...formData, presupuesto_max_renta: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', marginTop: '1rem' }} />
+                <input placeholder="Tipo de propiedad" value={formData.tipo_propiedad} onChange={e => setFormData({...formData, tipo_propiedad: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', marginTop: '1rem' }} />
+                <label style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
+                  <input type="checkbox" checked={formData.es_amueblada} onChange={e => setFormData({...formData, es_amueblada: e.target.checked})} /> Propiedad amueblada
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
+                  <input type="checkbox" checked={formData.quiere_bano_propio} onChange={e => setFormData({...formData, quiere_bano_propio: e.target.checked})} /> Quiero baño propio
+                </label>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
                 <h2 style={{ textAlign: 'center', color: '#1f2937', marginBottom: '1.5rem' }}>Estilo de vida</h2>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Nivel de limpieza <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>{formData.habito_limpieza_nivel}/100</span></label>
@@ -483,7 +674,7 @@ export default function App() {
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1f2937' }}>Frecuencia de invitados <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>{formData.frecuencia_invitados_nivel}/100</span></label>
                   <input type="range" min="0" max="100" value={formData.frecuencia_invitados_nivel} onChange={e => setFormData({ ...formData, frecuencia_invitados_nivel: Number(e.target.value) })} style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: '#e5e7eb', borderRadius: '4px', outline: 'none' }} />
                 </div>
-                <select value={formData.horario_vida} onChange={e => setFormData({ ...formData, horario_vida: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }}>
+                <select value={formData.horario_vida} onChange={e => setFormData({ ...formData, horario_vida: e.target.value })} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', marginTop: '1rem' }}>
                   <option value="">Horario de vida</option>
                   <option value="Mañanero">Mañanero</option>
                   <option value="Nocturno">Nocturno</option>
@@ -498,7 +689,7 @@ export default function App() {
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
               {step > 1 && <button onClick={handleBack} style={{ padding: '0.75rem 1.5rem', border: '1px solid #d1d5db', borderRadius: '9999px', background: 'white', cursor: 'pointer', fontWeight: '600' }}>Atrás</button>}
-              {step < 2 ? (
+              {step < 3 ? (
                 <button onClick={handleNext} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', marginLeft: 'auto', cursor: 'pointer', fontWeight: '600' }}>Siguiente</button>
               ) : (
                 <button onClick={handleRegister} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', marginLeft: 'auto', cursor: 'pointer', fontWeight: '600' }}>Finalizar Registro</button>
