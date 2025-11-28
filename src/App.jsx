@@ -29,7 +29,17 @@ const translations = {
     termsTitle: 'Términos y Condiciones',
     termsText: 'Al usar Roomie Finder, aceptas nuestros términos de uso, política de privacidad y el tratamiento de tus datos personales conforme a la legislación aplicable.',
     readFull: 'Leer términos completos',
-    logOut: 'Cerrar sesión'
+    logOut: 'Cerrar sesión',
+    photoLabel: 'Foto de perfil (máx. 5)',
+    propertyPhotos: 'Fotos de la propiedad (máx. 5)',
+    lifestyle: 'Estilo de Vida',
+    cleanliness: 'Nivel de limpieza',
+    noise: 'Tolerancia al ruido',
+    alcohol: 'Consumo de alcohol',
+    guests: 'Frecuencia de invitados',
+    schedule: 'Horario de vida',
+    smoker: 'Soy fumador',
+    pets: 'Mascotas (ej: perro pequeño)'
   },
   en: {
     name: 'Full name',
@@ -50,7 +60,17 @@ const translations = {
     termsTitle: 'Terms and Conditions',
     termsText: 'By using Roomie Finder, you agree to our terms of use, privacy policy, and the processing of your personal data in accordance with applicable law.',
     readFull: 'Read full terms',
-    logOut: 'Log out'
+    logOut: 'Log out',
+    photoLabel: 'Profile photos (max 5)',
+    propertyPhotos: 'Property photos (max 5)',
+    lifestyle: 'Lifestyle',
+    cleanliness: 'Cleanliness level',
+    noise: 'Noise tolerance',
+    alcohol: 'Alcohol consumption',
+    guests: 'Guest frequency',
+    schedule: 'Lifestyle schedule',
+    smoker: 'I am a smoker',
+    pets: 'Pets (e.g., small dog)'
   }
 };
 
@@ -539,7 +559,7 @@ export default function App() {
     );
   }
 
-  // =============== VISTA: MY PROFILE ===============
+  // =============== VISTA: MI PERFIL ===============
   if (currentView === 'my-profile') {
     return (
       <div style={{ fontFamily: 'system-ui', backgroundColor: bgClass, minHeight: '100vh', width: '100vw', padding: '1rem', boxSizing: 'border-box' }}>
@@ -569,8 +589,92 @@ export default function App() {
             }}
           />
 
-          <h3 style={{ color: textColor, marginBottom: '1rem' }}>{translations[lang].name}</h3>
+          <h3 style={{ color: textColor, marginBottom: '1rem', marginTop: '1.5rem' }}>{translations[lang].name}</h3>
           <input placeholder={translations[lang].name} value={formData.nombre_perfil} onChange={e => setFormData({...formData, nombre_perfil: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: darkMode ? '1px solid #4c1d95' : '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', color: textColor, backgroundColor: darkMode ? '#0f172a' : 'white' }} />
+
+          {/* Sliders de estilo de vida */}
+          <h3 style={{ color: textColor, margin: '1.5rem 0 1rem' }}>
+            {translations[lang].lifestyle}
+          </h3>
+          
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>
+              {translations[lang].cleanliness} 
+              <span style={{ color: '#7c3aed', marginLeft: '0.5rem' }}>{formData.habito_limpieza_nivel}/100</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={formData.habito_limpieza_nivel}
+              onChange={e => setFormData({...formData, habito_limpieza_nivel: Number(e.target.value)})}
+              style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: darkMode ? '#334155' : '#e5e7eb', borderRadius: '4px', outline: 'none' }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>
+              {translations[lang].noise} 
+              <span style={{ color: '#7c3aed', marginLeft: '0.5rem' }}>{formData.nivel_ruido_nivel}/100</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={formData.nivel_ruido_nivel}
+              onChange={e => setFormData({...formData, nivel_ruido_nivel: Number(e.target.value)})}
+              style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: darkMode ? '#334155' : '#e5e7eb', borderRadius: '4px', outline: 'none' }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>
+              {translations[lang].alcohol} 
+              <span style={{ color: '#7c3aed', marginLeft: '0.5rem' }}>{formData.consumo_alcohol_nivel}/100</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={formData.consumo_alcohol_nivel}
+              onChange={e => setFormData({...formData, consumo_alcohol_nivel: Number(e.target.value)})}
+              style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: darkMode ? '#334155' : '#e5e7eb', borderRadius: '4px', outline: 'none' }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>
+              {translations[lang].guests} 
+              <span style={{ color: '#7c3aed', marginLeft: '0.5rem' }}>{formData.frecuencia_invitados_nivel}/100</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={formData.frecuencia_invitados_nivel}
+              onChange={e => setFormData({...formData, frecuencia_invitados_nivel: Number(e.target.value)})}
+              style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: darkMode ? '#334155' : '#e5e7eb', borderRadius: '4px', outline: 'none' }}
+            />
+          </div>
+
+          <select value={formData.horario_vida} onChange={e => setFormData({...formData, horario_vida: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: darkMode ? '1px solid #4c1d95' : '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', marginBottom: '1rem', color: textColor, backgroundColor: darkMode ? '#0f172a' : 'white' }}>
+            <option value="">{translations[lang].schedule}</option>
+            <option value="Mañanero">Mañanero</option>
+            <option value="Nocturno">Nocturno</option>
+            <option value="Flexible">Flexible</option>
+          </select>
+
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', color: textColor }}>
+            <input type="checkbox" checked={formData.es_fumador} onChange={e => setFormData({...formData, es_fumador: e.target.checked})} /> 
+            {translations[lang].smoker}
+          </label>
+
+          <input 
+            placeholder={translations[lang].pets} 
+            value={formData.mascotas} 
+            onChange={e => setFormData({...formData, mascotas: e.target.value})} 
+            style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: darkMode ? '1px solid #4c1d95' : '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} 
+          />
 
           <button onClick={handleSaveProfile} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', fontWeight: '600', marginTop: '1rem' }}>{translations[lang].save}</button>
         </div>
@@ -578,7 +682,7 @@ export default function App() {
     );
   }
 
-  // =============== LOGIN / SIGNUP ===============
+  // =============== LOGIN / REGISTRO ===============
   return (
     <div style={{ fontFamily: 'system-ui', backgroundColor: bgClass, minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', boxSizing: 'border-box', overflow: 'hidden' }}>
       <div style={{ maxWidth: '400px', width: '100%', padding: '2rem', backgroundColor: cardBg, borderRadius: '1rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
@@ -632,13 +736,13 @@ export default function App() {
               <>
                 <h2 style={{ textAlign: 'center', color: textColor, marginBottom: '1.5rem' }}>Foto y Bio</h2>
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>{translations[lang].photoLabel || 'Foto de perfil (máx. 5)'}</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>{translations[lang].photoLabel}</label>
                   <input type="file" accept="image/*" multiple onChange={(e) => handlePhotoChange(e, 'profile')} style={{ width: '100%', padding: '0.5rem', border: darkMode ? '1px solid #4c1d95' : '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
                 </div>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>{translations[lang].bio}</label>
                   <textarea
-                    placeholder={translations[lang].bioPlaceholder || 'Cuéntanos algo sobre ti...'}
+                    placeholder={translations[lang].bio}
                     value={formData.bio}
                     onChange={e => setFormData({...formData, bio: e.target.value.slice(0, 120)})}
                     maxLength={120}
@@ -680,9 +784,86 @@ export default function App() {
 
             {step === 4 && (
               <>
-                <h2 style={{ textAlign: 'center', color: textColor, marginBottom: '1.5rem' }}>Finalizar</h2>
-                <p style={{ textAlign: 'center', color: mutedColor }}>Tu perfil está listo</p>
-                <button onClick={handleRegister} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', marginTop: '1rem', fontWeight: '600' }}>{translations[lang].register}</button>
+                <h2 style={{ textAlign: 'center', color: textColor, marginBottom: '1.5rem' }}>{translations[lang].lifestyle}</h2>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>
+                    {translations[lang].cleanliness} 
+                    <span style={{ color: '#7c3aed', marginLeft: '0.5rem' }}>{formData.habito_limpieza_nivel}/100</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={formData.habito_limpieza_nivel}
+                    onChange={e => setFormData({...formData, habito_limpieza_nivel: Number(e.target.value)})}
+                    style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: darkMode ? '#334155' : '#e5e7eb', borderRadius: '4px', outline: 'none' }}
+                  />
+                </div>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>
+                    {translations[lang].noise} 
+                    <span style={{ color: '#7c3aed', marginLeft: '0.5rem' }}>{formData.nivel_ruido_nivel}/100</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={formData.nivel_ruido_nivel}
+                    onChange={e => setFormData({...formData, nivel_ruido_nivel: Number(e.target.value)})}
+                    style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: darkMode ? '#334155' : '#e5e7eb', borderRadius: '4px', outline: 'none' }}
+                  />
+                </div>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>
+                    {translations[lang].alcohol} 
+                    <span style={{ color: '#7c3aed', marginLeft: '0.5rem' }}>{formData.consumo_alcohol_nivel}/100</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={formData.consumo_alcohol_nivel}
+                    onChange={e => setFormData({...formData, consumo_alcohol_nivel: Number(e.target.value)})}
+                    style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: darkMode ? '#334155' : '#e5e7eb', borderRadius: '4px', outline: 'none' }}
+                  />
+                </div>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: textColor }}>
+                    {translations[lang].guests} 
+                    <span style={{ color: '#7c3aed', marginLeft: '0.5rem' }}>{formData.frecuencia_invitados_nivel}/100</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={formData.frecuencia_invitados_nivel}
+                    onChange={e => setFormData({...formData, frecuencia_invitados_nivel: Number(e.target.value)})}
+                    style={{ width: '100%', height: '8px', WebkitAppearance: 'none', background: darkMode ? '#334155' : '#e5e7eb', borderRadius: '4px', outline: 'none' }}
+                  />
+                </div>
+                
+                <select value={formData.horario_vida} onChange={e => setFormData({...formData, horario_vida: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: darkMode ? '1px solid #4c1d95' : '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', marginBottom: '1rem', color: textColor, backgroundColor: darkMode ? '#0f172a' : 'white' }}>
+                  <option value="">{translations[lang].schedule}</option>
+                  <option value="Mañanero">Mañanero</option>
+                  <option value="Nocturno">Nocturno</option>
+                  <option value="Flexible">Flexible</option>
+                </select>
+                
+                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', color: textColor }}>
+                  <input type="checkbox" checked={formData.es_fumador} onChange={e => setFormData({...formData, es_fumador: e.target.checked})} /> 
+                  {translations[lang].smoker}
+                </label>
+                
+                <input placeholder={translations[lang].pets} value={formData.mascotas} onChange={e => setFormData({...formData, mascotas: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: darkMode ? '1px solid #4c1d95' : '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box' }} />
+                
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                  <button onClick={handleBack} style={{ padding: '0.75rem 1.5rem', border: darkMode ? '1px solid #4c1d95' : '1px solid #d1d5db', borderRadius: '9999px', background: 'none', cursor: 'pointer', fontWeight: '600', color: textColor }}>Atrás</button>
+                  <button onClick={handleRegister} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '9999px', marginLeft: 'auto', cursor: 'pointer', fontWeight: '600' }}>{translations[lang].register}</button>
+                </div>
               </>
             )}
           </>
