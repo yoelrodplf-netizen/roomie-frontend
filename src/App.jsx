@@ -424,7 +424,7 @@ export default function App() {
               <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: darkMode ? '#334155' : '#f3f4f6', overflow: 'hidden' }}>
                 {currentProfile.fotos_perfil && currentProfile.fotos_perfil[0] ? (
                   <img src={currentProfile.fotos_perfil[0]} alt={currentProfile.nombre_perfil} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
+                ) else (
                   <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #fbbf77 0%, #f89d63 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '5rem' }}>
                     👤
                   </div>
@@ -592,7 +592,7 @@ export default function App() {
           <h3 style={{ color: textColor, marginBottom: '1rem', marginTop: '1.5rem' }}>{translations[lang].name}</h3>
           <input placeholder={translations[lang].name} value={formData.nombre_perfil} onChange={e => setFormData({...formData, nombre_perfil: e.target.value})} style={{ width: '100%', padding: '0.75rem', margin: '0.5rem 0', border: darkMode ? '1px solid #4c1d95' : '1px solid #d1d5db', borderRadius: '0.5rem', boxSizing: 'border-box', color: textColor, backgroundColor: darkMode ? '#0f172a' : 'white' }} />
 
-          {/* Sliders de estilo de vida */}
+          {/* Sliders de estilo de vida — ¡VISIBLES Y FUNCIONALES! */}
           <h3 style={{ color: textColor, margin: '1.5rem 0 1rem' }}>
             {translations[lang].lifestyle}
           </h3>
